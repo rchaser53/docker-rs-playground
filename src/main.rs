@@ -3,12 +3,22 @@ use hyper::body::Body;
 use hyper::Client;
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
 
+use serde_json;
+
+mod images;
+use images::Images;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client: Builder = Default::default();
     let bytes = client.get("/images/json").await.unwrap();
 
-    println!("{}", bytes);
+    let data: Vec<Images> = match serde_json::from_str(&bytes) {
+        Ok(data) => data,
+        Err(err) => panic!("{}", err),
+    };
+
+    println!("{:?}", data);
     Ok(())
 }
 
