@@ -1,6 +1,7 @@
 use futures_util::stream::TryStreamExt;
+// use http::Request;
 use hyper::body::Body;
-use hyper::Client;
+use hyper::{Client, Request};
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
 
 use crate::images::Image;
@@ -8,7 +9,7 @@ use crate::images::Image;
 #[derive(Debug)]
 pub struct Builder {
     pub base_url: String,
-    pub client: Client<UnixConnector, Body>,
+    pub client: Client<UnixConnector>,
 }
 
 impl Builder {
@@ -21,8 +22,39 @@ impl Builder {
         &self,
         target_url: &str,
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
-        let url = Uri::new(&self.base_url, target_url).into();
-        let response_body = self.client.get(url).await?.into_body();
+        let url: Uri = Uri::new(&self.base_url, target_url).into();
+        let request = Request::builder()
+            .method("GET")
+            .uri(url)
+            .body(Body::empty())
+            .unwrap();
+        let response_body = self.client.request(request).await?.into_body();
+
+        let bytes = response_body
+            .try_fold(Vec::default(), |mut v, bytes| async {
+                v.extend(bytes);
+                Ok(v)
+            })
+            .await
+            .unwrap();
+        Ok(String::from_utf8(bytes).unwrap())
+    }
+
+    pub async fn post<S>(
+        &self,
+        target_url: &str,
+        body: S,
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>>
+    where
+        S: Into<Body>,
+    {
+        let url: Uri = Uri::new(&self.base_url, target_url).into();
+        let request = Request::builder()
+            .method("POST")
+            .uri(url)
+            .body(body.into())
+            .unwrap();
+        let response_body = self.client.request(request).await?.into_body();
 
         let bytes = response_body
             .try_fold(Vec::default(), |mut v, bytes| async {

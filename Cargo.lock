@@ -37,6 +37,7 @@ dependencies = [
  "futures",
  "futures-core",
  "futures-util",
+ "http",
  "hyper",
  "hyperlocal",
  "serde",
