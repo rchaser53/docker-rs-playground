@@ -1,3 +1,5 @@
+use anyhow::{bail, Result};
+
 use crate::builder::Builder;
 use serde::{Deserialize, Serialize};
 
@@ -25,28 +27,27 @@ impl Image {
         }
     }
 
-    pub async fn get_images(&self) -> Vec<DockerImage> {
-        let bytes = self.builder.get("/images/json?digests=1").await.unwrap();
+    pub async fn get_images(&self) -> Result<Vec<DockerImage>> {
+        let bytes = self.builder.get("/images/json?digests=1").await?;
 
         match serde_json::from_str(&bytes) {
-            Ok(data) => data,
-            Err(err) => panic!("{}", err),
+            Ok(data) => Ok(data),
+            Err(err) => bail!("{}", err),
         }
     }
 
-    pub async fn pull_image(&self, image_name: &str, tag: &str) -> Vec<String> {
-        let bytes = self
+    pub async fn pull_image(&self, image_name: &str, tag: &str) -> Result<Vec<String>> {
+        let result = self
             .builder
             .post(
                 &format!("/images/create?fromImage={}&tag={}", image_name, tag),
                 vec![],
             )
-            .await
-            .unwrap();
-        bytes
+            .await?
             .split("\r\n")
             .filter(|s| *s != "")
             .map(|s| s.trim().to_string())
-            .collect::<Vec<String>>()
+            .collect::<Vec<String>>();
+        Ok(result)
     }
 }

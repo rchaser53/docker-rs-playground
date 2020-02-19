@@ -1,5 +1,6 @@
+use anyhow::{bail, Result};
 use futures_util::stream::TryStreamExt;
-// use http::Request;
+
 use hyper::body::Body;
 use hyper::{Client, Request};
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
@@ -18,10 +19,7 @@ impl Builder {
         Builder { base_url, client }
     }
 
-    pub async fn get(
-        &self,
-        target_url: &str,
-    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get(&self, target_url: &str) -> Result<String> {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
         let request = Request::builder()
             .method("GET")
@@ -40,11 +38,7 @@ impl Builder {
         Ok(String::from_utf8(bytes).unwrap())
     }
 
-    pub async fn post<S>(
-        &self,
-        target_url: &str,
-        body: S,
-    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>>
+    pub async fn post<S>(&self, target_url: &str, body: S) -> Result<String>
     where
         S: Into<Body>,
     {
