@@ -34,18 +34,19 @@ impl Image {
         }
     }
 
-    pub async fn pull_image(&self) -> String {
+    pub async fn pull_image(&self, image_name: &str, tag: &str) -> Vec<String> {
         let bytes = self
             .builder
-            .post("/images/create?fromImage=busybox&tag=latest", vec![])
+            .post(
+                &format!("/images/create?fromImage={}&tag={}", image_name, tag),
+                vec![],
+            )
             .await
             .unwrap();
-
         bytes
-
-        // match serde_json::from_str(&bytes) {
-        //     Ok(data) => data,
-        //     Err(err) => panic!("{}", err),
-        // }
+            .split("\r\n")
+            .filter(|s| *s != "")
+            .map(|s| s.trim().to_string())
+            .collect::<Vec<String>>()
     }
 }
