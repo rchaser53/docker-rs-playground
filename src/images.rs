@@ -11,8 +11,10 @@ pub struct DockerImage {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct DockerImagePull {
-    pub status: String,
+#[serde(untagged)]
+pub enum DockerImagePull {
+    Success { status: String },
+    Failed { message: String },
 }
 
 #[derive(Debug)]
@@ -36,7 +38,7 @@ impl Image {
         }
     }
 
-    pub async fn pull_image(&self, image_name: &str, tag: &str) -> Result<Vec<String>> {
+    pub async fn pull_image(&self, image_name: &str, tag: &str) -> Result<Vec<DockerImagePull>> {
         let result = self
             .builder
             .post(
@@ -46,8 +48,14 @@ impl Image {
             .await?
             .split("\r\n")
             .filter(|s| *s != "")
-            .map(|s| s.trim().to_string())
-            .collect::<Vec<String>>();
+            .map(|s| {
+                let result: DockerImagePull = match serde_json::from_str(&s) {
+                    Ok(data) => data,
+                    Err(err) => panic!("{}", err),
+                };
+                result
+            })
+            .collect::<Vec<DockerImagePull>>();
         Ok(result)
     }
 }
