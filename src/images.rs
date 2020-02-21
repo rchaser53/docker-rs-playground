@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
 
 use crate::builder::Builder;
+use crate::request::RequestBuilder;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
