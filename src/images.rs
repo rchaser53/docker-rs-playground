@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use async_trait::async_trait;
 
 use crate::builder::Builder;
 use crate::request::RequestBuilder;
@@ -61,46 +62,59 @@ impl Image {
     }
 }
 
-struct Hub {}
+pub trait Req {}
+impl Req for Image {}
 
-pub trait SvcA {}
-impl SvcA for Hub {}
-
-pub trait IsSvcA {
-    fn a(&self) -> String;
+#[async_trait]
+pub trait IsReq {
+    async fn get(&self) -> Result<String>;
 }
-impl<T: SvcA> IsSvcA for T {
-    fn a(&self) -> String {
-        "svc-a".to_string()
+
+#[async_trait]
+impl<T: Req + Sync> IsReq for T {
+    async fn get(&self) -> Result<String> {
+        let builder: Builder = Default::default();
+        let result = builder.get("/images/json?digests=1").await?;
+        Ok(result)
     }
 }
 
-pub trait HaveSvcA {
-    type A: IsSvcA;
-    fn get_svc_a(&self) -> &Self::A;
+pub trait HaveReq {
+    type A: IsReq;
+    fn get_req(&self) -> &Self::A;
 }
-impl HaveSvcA for Hub {
+impl HaveReq for Image {
     type A = Self;
-    fn get_svc_a(&self) -> &Self::A {
+    fn get_req(&self) -> &Self::A {
         &self
     }
 }
 
 mod test {
-    use super::{HaveSvcA, Hub, SvcA};
+    use anyhow::{bail, Result};
+    use async_trait::async_trait;
+    use tokio::runtime::Runtime;
+
+    use super::{Builder, HaveReq, Image, Req};
 
     #[test]
-    fn test_use_b() {
-        trait IsSvcA {
-            fn a(&self) -> String;
-        }
-        impl<T: SvcA> IsSvcA for T {
-            fn a(&self) -> String {
-                "svc-d".to_string()
-            }
+    fn test_req() {
+        #[async_trait]
+        pub trait IsReq {
+            async fn get(&self) -> Result<String>;
         }
 
-        let svc = Hub {};
-        assert_eq!(svc.get_svc_a().a(), "svc-a");
+        #[async_trait]
+        impl<T: Req + Sync> IsReq for T {
+            async fn get(&self) -> Result<String> {
+                Ok("test".to_string())
+            }
+        }
+        let mut rt = Runtime::new().unwrap();
+
+        let image = Image::new();
+        let result = rt.block_on(image.get_req().get());
+
+        assert_eq!(result.unwrap(), "test");
     }
 }

@@ -30,3 +30,29 @@ async fn unix_socket_server() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+
+struct Hub {}
+
+pub trait SvcA {}
+impl SvcA for Hub {}
+
+pub trait IsSvcA {
+    fn a(&self) -> String;
+}
+impl<T: SvcA> IsSvcA for T {
+    fn a(&self) -> String {
+        "svc-a".to_string()
+    }
+}
+
+pub trait HaveSvcA {
+    type A: IsSvcA;
+    fn get_svc_a(&self) -> &Self::A;
+}
+impl HaveSvcA for Hub {
+    type A = Self;
+    fn get_svc_a(&self) -> &Self::A {
+        &self
+    }
+}
