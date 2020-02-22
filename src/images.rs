@@ -60,3 +60,47 @@ impl Image {
         Ok(result)
     }
 }
+
+struct Hub {}
+
+pub trait SvcA {}
+impl SvcA for Hub {}
+
+pub trait IsSvcA {
+    fn a(&self) -> String;
+}
+impl<T: SvcA> IsSvcA for T {
+    fn a(&self) -> String {
+        "svc-a".to_string()
+    }
+}
+
+pub trait HaveSvcA {
+    type A: IsSvcA;
+    fn get_svc_a(&self) -> &Self::A;
+}
+impl HaveSvcA for Hub {
+    type A = Self;
+    fn get_svc_a(&self) -> &Self::A {
+        &self
+    }
+}
+
+mod test {
+    use super::{HaveSvcA, Hub, SvcA};
+
+    #[test]
+    fn test_use_b() {
+        trait IsSvcA {
+            fn a(&self) -> String;
+        }
+        impl<T: SvcA> IsSvcA for T {
+            fn a(&self) -> String {
+                "svc-d".to_string()
+            }
+        }
+
+        let svc = Hub {};
+        assert_eq!(svc.get_svc_a().a(), "svc-a");
+    }
+}
