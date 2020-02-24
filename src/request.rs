@@ -1,10 +1,13 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use base64::encode;
 use futures_util::stream::TryStreamExt;
 
 use hyper::body::Body;
 use hyper::Request;
 use hyperlocal::Uri;
+
+use serde::Serialize;
 
 use crate::builder::Builder;
 
@@ -34,6 +37,7 @@ impl RequestBuilder for Builder {
             .method("POST")
             .uri(url)
             .body(body.into())
+            // .header("X-Registry-Auth", )
             .unwrap();
         let response_body = self.client.request(request).await?.into_body();
         let bytes = response_body
@@ -51,4 +55,32 @@ impl RequestBuilder for Builder {
 pub trait RequestBuilder {
     async fn get(&self, target_url: &str) -> Result<String>;
     async fn post<S: Into<Body> + Send>(&self, target_url: &str, body: S) -> Result<String>;
+}
+
+pub fn serialize_base64<T>(input: T) -> Result<String>
+where
+    T: Serialize,
+{
+    let json = serde_json::to_string(&input).map_err(|err| anyhow!(err))?;
+    Ok(encode(&json))
+}
+
+#[derive(Serialize)]
+pub struct XRegistryAuth {
+    pub username: String,
+    pub password: String,
+    pub email: String,
+}
+
+#[test]
+fn serialize_base64_test() {
+    let input = XRegistryAuth {
+        username: String::from("test_name"),
+        password: String::from("test_password"),
+        email: String::from("test@gmail.com"),
+    };
+    let expected = encode(
+        "{\"username\":\"test_name\",\"password\":\"test_password\",\"email\":\"test@gmail.com\"}",
+    );
+    assert_eq!(serialize_base64(input).unwrap(), expected);
 }

@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1.24"
+base64 = "0.11.0"
 hyper = { version = "0.13.2", features = ["stream"] }
 hyperlocal = { git = "https://github.com/softprops/hyperlocal" }
 
