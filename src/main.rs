@@ -1,8 +1,8 @@
 mod builder;
 use builder::Builder;
 
+mod containers;
 mod images;
-use images::ImageTrait;
 mod request;
 
 #[tokio::main]

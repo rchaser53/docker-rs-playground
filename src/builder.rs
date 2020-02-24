@@ -1,6 +1,7 @@
 use hyper::Client;
 use hyperlocal::{UnixClientExt, UnixConnector};
 
+use crate::containers::Container;
 use crate::images::Image;
 
 #[derive(Debug)]
@@ -17,6 +18,10 @@ impl Builder {
 
     pub fn image(&self) -> Image {
         Image::new()
+    }
+
+    pub fn container(&self) -> Container {
+        Container::new()
     }
 }
 
