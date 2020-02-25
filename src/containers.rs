@@ -18,4 +18,8 @@ impl Container {
     pub async fn get_containers(&self) -> Result<String> {
         self.builder.get("/containers/json").await
     }
+
+    pub async fn get_container(&self, id: &str) -> Result<String> {
+        self.builder.get(&format!("/containers/{}/json", id)).await
+    }
 }
