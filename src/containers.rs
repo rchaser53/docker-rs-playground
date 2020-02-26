@@ -12,6 +12,11 @@ macro_rules! create_query_by_struct {
           $($field: $val),*,
           ..Default::default()
       });
+  };
+  ( $name:ident ) => {
+    serde_qs::to_string(&$name {
+        ..Default::default()
+    });
   }
 }
 
