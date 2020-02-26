@@ -5,6 +5,7 @@ use std::default::Default;
 use crate::builder::Builder;
 use crate::request::RequestBuilder;
 
+#[macro_export]
 macro_rules! create_query_by_struct {
   ( $name:ident, $( ($field:ident, $val:expr) ),* ) => {
       serde_qs::to_string(&$name {
@@ -26,8 +27,7 @@ impl Container {
         }
     }
 
-    pub async fn get_containers(&self) -> Result<String> {
-        let query_string = create_query_by_struct!(GetContainerOption, (all, Some(false))).unwrap();
+    pub async fn get_containers(&self, query_string: &str) -> Result<String> {
         self.builder
             .get(&format!("/containers/json?{}", query_string))
             .await
@@ -47,10 +47,3 @@ pub struct GetContainerOption {
     pub size: Option<bool>,
     pub filters: Option<String>,
 }
-
-// all – 1/True/true or 0/False/false, Show all containers. Only running containers are shown by default (i.e., this defaults to false)
-// limit – Show limit last created containers, include non-running ones.
-// since – Show only containers created since Id, include non-running ones.
-// before – Show only containers created before Id, include non-running ones.
-// size – 1/True/true or 0/False/false, Show the containers sizes
-// filters - a JSON encoded value of the filters (a map[string][]string) to process on the containers list. Available filters:
