@@ -20,6 +20,28 @@ macro_rules! create_query_by_struct {
   }
 }
 
+#[macro_export]
+macro_rules! create_macro {
+    ( $macro_name:ident, $name:ident) => {
+      #[macro_export]
+      macro_rules! $macro_name {
+        // ( $( ($field:ident, $val:expr) ),* ) => {
+        //     serde_qs::to_string(&$name {
+        //         $($field: $val),*,
+        //         ..Default::default()
+        //     });
+        // };
+        ( $field:ident, $val:expr ) => {
+          serde_qs::to_string(&$name {
+              $field: $val,
+              ..Default::default()
+          });
+        };
+      }
+    }
+}
+
+
 #[derive(Debug)]
 pub struct Container {
     pub builder: Builder,
