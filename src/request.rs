@@ -8,6 +8,7 @@ use hyper::Request;
 use hyperlocal::Uri;
 
 use serde::Serialize;
+use std::collections::HashMap;
 
 use crate::builder::Builder;
 
@@ -31,15 +32,25 @@ impl RequestBuilder for Builder {
         Ok(String::from_utf8(bytes).unwrap())
     }
 
-    async fn post<S>(&self, target_url: &str, body: S) -> Result<String>
+    async fn post<S>(
+        &self,
+        target_url: &str,
+        body: S,
+        headers: Option<HashMap<String, String>>,
+    ) -> Result<String>
     where
         S: Into<Body> + Send,
     {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
-        let request = Request::builder()
-            .method("POST")
-            .uri(url)
-            .body(body.into())?;
+        let mut request = Request::builder().method("POST").uri(url);
+
+        if let Some(headers) = headers {
+            for (key, val) in headers.iter() {
+                request = request.header(key, val);
+            }
+        }
+
+        let request = request.body(body.into())?;
         let response_body = self.client.request(request).await?.into_body();
         let bytes = response_body
             .try_fold(Vec::default(), |mut v, bytes| async {
@@ -55,7 +66,12 @@ impl RequestBuilder for Builder {
 #[async_trait]
 pub trait RequestBuilder {
     async fn get(&self, target_url: &str) -> Result<String>;
-    async fn post<S>(&self, target_url: &str, body: S) -> Result<String>
+    async fn post<S>(
+        &self,
+        target_url: &str,
+        body: S,
+        headers: Option<HashMap<String, String>>,
+    ) -> Result<String>
     where
         S: Into<Body> + Send;
 }

@@ -1,8 +1,9 @@
 use anyhow::{bail, Result};
 
 use crate::builder::Builder;
-use crate::request::RequestBuilder;
+use crate::request::{serialize_base64, RequestBuilder, XRegistryAuth};
 use serde::Deserialize;
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "PascalCase")]
@@ -35,12 +36,28 @@ impl Image {
         deserialize_docker_images(&bytes)
     }
 
-    pub async fn pull_image(&self, image_name: &str, tag: &str) -> Result<Vec<DockerImagePull>> {
+    pub async fn pull_image(
+        &self,
+        image_name: &str,
+        tag: &str,
+        auth_info: Option<XRegistryAuth>,
+    ) -> Result<Vec<DockerImagePull>> {
+        let auth_info = if let Some(x_registry_auth) = auth_info {
+            let mut map = HashMap::new();
+            let auth_token_str =
+                serialize_base64(x_registry_auth).expect("failed to serialize to base64");
+            map.insert(String::from("X-Registry-Auth"), auth_token_str);
+            Some(map)
+        } else {
+            None
+        };
+
         let bytes = self
             .builder
             .post(
                 &format!("/images/create?fromImage={}&tag={}", image_name, tag),
                 vec![],
+                auth_info,
             )
             .await?;
         deserialize_docker_pull_images(&bytes)
