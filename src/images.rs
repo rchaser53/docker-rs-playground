@@ -31,9 +31,8 @@ impl Image {
         }
     }
 
-    pub async fn get_images(&self) -> Result<Vec<DockerImage>> {
-        let bytes = self.builder.get("/images/json").await?;
-        deserialize_docker_images(&bytes)
+    pub async fn get_images(&self) -> Result<String> {
+        self.builder.get("/images/json", None).await
     }
 
     pub async fn pull_image(
@@ -41,7 +40,7 @@ impl Image {
         image_name: &str,
         tag: &str,
         auth_info: Option<XRegistryAuth>,
-    ) -> Result<Vec<DockerImagePull>> {
+    ) -> Result<String> {
         let auth_info = if let Some(x_registry_auth) = auth_info {
             let mut map = HashMap::new();
             let auth_token_str =
@@ -52,15 +51,13 @@ impl Image {
             None
         };
 
-        let bytes = self
-            .builder
+        self.builder
             .post(
                 &format!("/images/create?fromImage={}&tag={}", image_name, tag),
                 vec![],
                 auth_info,
             )
-            .await?;
-        deserialize_docker_pull_images(&bytes)
+            .await
     }
 }
 
@@ -76,7 +73,6 @@ pub fn deserialize_docker_pull_images(input: &str) -> Result<Vec<DockerImagePull
         .split("\n")
         .filter(|s| *s != "")
         .map(|s| {
-            dbg!(&s);
             let result: DockerImagePull = match serde_json::from_str(&s) {
                 Ok(data) => data,
                 Err(err) => panic!("{}", err),
