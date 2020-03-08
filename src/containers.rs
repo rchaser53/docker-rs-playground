@@ -1,5 +1,8 @@
 use anyhow::Result;
+use hyper::body::Body;
 use serde::Serialize;
+use serde_json::json;
+use std::collections::HashMap;
 use std::default::Default;
 
 use crate::builder::Builder;
@@ -20,31 +23,16 @@ macro_rules! create_query_by_struct {
   }
 }
 
-#[macro_export]
-macro_rules! create_macro {
-    ( $macro_name:ident, $name:ident) => {
-      #[macro_export]
-      macro_rules! $macro_name {
-        // ( $( ($field:ident, $val:expr) ),* ) => {
-        //     serde_qs::to_string(&$name {
-        //         $($field: $val),*,
-        //         ..Default::default()
-        //     });
-        // };
-        ( $field:ident, $val:expr ) => {
-          serde_qs::to_string(&$name {
-              $field: $val,
-              ..Default::default()
-          });
-        };
-      }
-    }
-}
-
-
 #[derive(Debug)]
 pub struct Container {
     pub builder: Builder,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "PascalCase")]
+pub struct CreateContainerBody {
+    pub image: String,
+    pub cmd: Vec<String>,
 }
 
 impl Container {
@@ -56,12 +44,35 @@ impl Container {
 
     pub async fn get_containers(&self, query_string: &str) -> Result<String> {
         self.builder
-            .get(&format!("/containers/json?{}", query_string))
+            .get(&format!("/containers/json?{}", query_string), None)
             .await
     }
 
-    pub async fn get_container(&self, id: &str) -> Result<String> {
-        self.builder.get(&format!("/containers/{}/json", id)).await
+    pub async fn get_container(&self, id: &str, query_string: &str) -> Result<String> {
+        self.builder
+            .get(&format!("/containers/{}/json?{}", id, query_string), None)
+            .await
+    }
+
+    pub async fn create_container(
+        &self,
+        container_info: CreateContainerBody,
+        query_string: &str,
+    ) -> Result<String> {
+        let body = Body::from(json!(container_info).to_string());
+        let mut map = HashMap::new();
+        map.insert(
+            String::from("Content-Type"),
+            String::from("application/json"),
+        );
+
+        self.builder
+            .post(
+                &format!("/containers/create?{}", query_string),
+                body,
+                Some(map),
+            )
+            .await
     }
 }
 

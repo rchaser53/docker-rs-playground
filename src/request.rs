@@ -14,7 +14,11 @@ use crate::builder::Builder;
 
 #[async_trait]
 impl RequestBuilder for Builder {
-    async fn get(&self, target_url: &str) -> Result<String> {
+    async fn get(
+        &self,
+        target_url: &str,
+        headers: Option<HashMap<String, String>>,
+    ) -> Result<String> {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
         let request = Request::builder()
             .method("GET")
@@ -65,7 +69,11 @@ impl RequestBuilder for Builder {
 
 #[async_trait]
 pub trait RequestBuilder {
-    async fn get(&self, target_url: &str) -> Result<String>;
+    async fn get(
+        &self,
+        target_url: &str,
+        headers: Option<HashMap<String, String>>,
+    ) -> Result<String>;
     async fn post<S>(
         &self,
         target_url: &str,
