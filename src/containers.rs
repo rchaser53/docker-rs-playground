@@ -74,6 +74,12 @@ impl Container {
             )
             .await
     }
+
+    pub async fn remove_container(&self, id: &str) -> Result<String> {
+        self.builder
+            .delete(&format!("/containers/{}", id), None)
+            .await
+    }
 }
 
 #[derive(Debug, Default, Serialize)]

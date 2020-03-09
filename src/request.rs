@@ -65,6 +65,28 @@ impl RequestBuilder for Builder {
             .unwrap();
         Ok(String::from_utf8(bytes).unwrap())
     }
+
+    async fn delete(
+        &self,
+        target_url: &str,
+        headers: Option<HashMap<String, String>>,
+    ) -> Result<String> {
+        let url: Uri = Uri::new(&self.base_url, target_url).into();
+        let request = Request::builder()
+            .method("DELETE")
+            .uri(url)
+            .body(Body::empty())
+            .unwrap();
+        let response_body = self.client.request(request).await?.into_body();
+        let bytes = response_body
+            .try_fold(Vec::default(), |mut v, bytes| async {
+                v.extend(bytes);
+                Ok(v)
+            })
+            .await
+            .unwrap();
+        Ok(String::from_utf8(bytes).unwrap())
+    }
 }
 
 #[async_trait]
@@ -82,6 +104,11 @@ pub trait RequestBuilder {
     ) -> Result<String>
     where
         S: Into<Body> + Send;
+    async fn delete(
+        &self,
+        target_url: &str,
+        headers: Option<HashMap<String, String>>,
+    ) -> Result<String>;
 }
 
 pub fn serialize_base64<T>(input: T) -> Result<String>
