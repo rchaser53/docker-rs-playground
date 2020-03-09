@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use base64::encode;
 use futures_util::stream::TryStreamExt;
 
+use http::request;
 use hyper::body::Body;
 use hyper::Request;
 use hyperlocal::Uri;
@@ -20,11 +21,7 @@ impl RequestBuilder for Builder {
         headers: Option<HashMap<String, String>>,
     ) -> Result<String> {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
-        let request = Request::builder()
-            .method("GET")
-            .uri(url)
-            .body(Body::empty())
-            .unwrap();
+        let request = create_request("POST", url, headers).body(Body::empty())?;
         let response_body = self.client.request(request).await?.into_body();
         let bytes = response_body
             .try_fold(Vec::default(), |mut v, bytes| async {
@@ -46,24 +43,15 @@ impl RequestBuilder for Builder {
         S: Into<Body> + Send,
     {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
-        let mut request = Request::builder().method("POST").uri(url);
-
-        if let Some(headers) = headers {
-            for (key, val) in headers.iter() {
-                request = request.header(key, val);
-            }
-        }
-
-        let request = request.body(body.into())?;
+        let request = create_request("POST", url, headers).body(body.into())?;
         let response_body = self.client.request(request).await?.into_body();
         let bytes = response_body
             .try_fold(Vec::default(), |mut v, bytes| async {
                 v.extend(bytes);
                 Ok(v)
             })
-            .await
-            .unwrap();
-        Ok(String::from_utf8(bytes).unwrap())
+            .await?;
+        Ok(String::from_utf8(bytes)?)
     }
 
     async fn delete(
@@ -72,21 +60,30 @@ impl RequestBuilder for Builder {
         headers: Option<HashMap<String, String>>,
     ) -> Result<String> {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
-        let request = Request::builder()
-            .method("DELETE")
-            .uri(url)
-            .body(Body::empty())
-            .unwrap();
+        let request = create_request("DELETE", url, headers).body(Body::empty())?;
         let response_body = self.client.request(request).await?.into_body();
         let bytes = response_body
             .try_fold(Vec::default(), |mut v, bytes| async {
                 v.extend(bytes);
                 Ok(v)
             })
-            .await
-            .unwrap();
-        Ok(String::from_utf8(bytes).unwrap())
+            .await?;
+        Ok(String::from_utf8(bytes)?)
     }
+}
+
+pub fn create_request(
+    method: &str,
+    url: Uri,
+    headers: Option<HashMap<String, String>>,
+) -> request::Builder {
+    let mut request = Request::builder().method(method).uri(url);
+    if let Some(headers) = headers {
+        for (key, val) in headers.iter() {
+            request = request.header(key, val);
+        }
+    }
+    request
 }
 
 #[async_trait]
