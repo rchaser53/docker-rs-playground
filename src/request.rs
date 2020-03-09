@@ -23,14 +23,7 @@ impl RequestBuilder for Builder {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
         let request = create_request("POST", url, headers).body(Body::empty())?;
         let response_body = self.client.request(request).await?.into_body();
-        let bytes = response_body
-            .try_fold(Vec::default(), |mut v, bytes| async {
-                v.extend(bytes);
-                Ok(v)
-            })
-            .await
-            .unwrap();
-        Ok(String::from_utf8(bytes).unwrap())
+        process_response_body(response_body).await
     }
 
     async fn post<S>(
@@ -45,13 +38,7 @@ impl RequestBuilder for Builder {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
         let request = create_request("POST", url, headers).body(body.into())?;
         let response_body = self.client.request(request).await?.into_body();
-        let bytes = response_body
-            .try_fold(Vec::default(), |mut v, bytes| async {
-                v.extend(bytes);
-                Ok(v)
-            })
-            .await?;
-        Ok(String::from_utf8(bytes)?)
+        process_response_body(response_body).await
     }
 
     async fn delete(
@@ -62,13 +49,7 @@ impl RequestBuilder for Builder {
         let url: Uri = Uri::new(&self.base_url, target_url).into();
         let request = create_request("DELETE", url, headers).body(Body::empty())?;
         let response_body = self.client.request(request).await?.into_body();
-        let bytes = response_body
-            .try_fold(Vec::default(), |mut v, bytes| async {
-                v.extend(bytes);
-                Ok(v)
-            })
-            .await?;
-        Ok(String::from_utf8(bytes)?)
+        process_response_body(response_body).await
     }
 }
 
@@ -84,6 +65,16 @@ pub fn create_request(
         }
     }
     request
+}
+
+pub async fn process_response_body(response_body: Body) -> Result<String> {
+    let bytes = response_body
+        .try_fold(Vec::default(), |mut v, bytes| async {
+            v.extend(bytes);
+            Ok(v)
+        })
+        .await?;
+    Ok(String::from_utf8(bytes)?)
 }
 
 #[async_trait]
