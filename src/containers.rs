@@ -5,7 +5,6 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::default::Default;
 
-use crate::builder::Builder;
 use crate::request::RequestBuilder;
 
 #[macro_export]
@@ -24,8 +23,8 @@ macro_rules! create_query_by_struct {
 }
 
 #[derive(Debug)]
-pub struct Container {
-    pub builder: Builder,
+pub struct Container<T> {
+    pub builder: T,
 }
 
 #[derive(Debug, Serialize, PartialEq)]
@@ -35,11 +34,9 @@ pub struct CreateContainerBody {
     pub cmd: Vec<String>,
 }
 
-impl Container {
-    pub fn new() -> Self {
-        Container {
-            builder: Default::default(),
-        }
+impl<T: RequestBuilder> Container<T> {
+    pub fn new(builder: T) -> Self {
+        Container { builder }
     }
 
     pub async fn get_containers(&self, query_string: &str) -> Result<String> {

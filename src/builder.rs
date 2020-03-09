@@ -4,7 +4,7 @@ use hyperlocal::{UnixClientExt, UnixConnector};
 use crate::containers::Container;
 use crate::images::Image;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Builder {
     pub base_url: String,
     pub client: Client<UnixConnector>,
@@ -16,12 +16,12 @@ impl Builder {
         Builder { base_url, client }
     }
 
-    pub fn image(&self) -> Image {
-        Image::new()
+    pub fn image(&self) -> Image<Self> {
+        Image::new(self.clone())
     }
 
-    pub fn container(&self) -> Container {
-        Container::new()
+    pub fn container(&self) -> Container<Self> {
+        Container::new(self.clone())
     }
 }
 

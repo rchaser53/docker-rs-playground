@@ -1,6 +1,5 @@
 use anyhow::{bail, Result};
 
-use crate::builder::Builder;
 use crate::request::{serialize_base64, RequestBuilder, XRegistryAuth};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -20,15 +19,13 @@ pub enum DockerImagePull {
 }
 
 #[derive(Debug)]
-pub struct Image {
-    pub builder: Builder,
+pub struct Image<T> {
+    pub builder: T,
 }
 
-impl Image {
-    pub fn new() -> Self {
-        Image {
-            builder: Default::default(),
-        }
+impl<T: RequestBuilder> Image<T> {
+    pub fn new(builder: T) -> Self {
+        Image { builder }
     }
 
     pub async fn get_images(&self) -> Result<String> {
@@ -84,7 +81,48 @@ pub fn deserialize_docker_pull_images(input: &str) -> Result<Vec<DockerImagePull
 }
 
 mod test {
+    use async_trait::async_trait;
+    use hyper::body::Body;
+
     use super::*;
+    use crate::request::RequestBuilder;
+
+    pub struct TestStruct {}
+
+    #[async_trait]
+    impl RequestBuilder for TestStruct {
+        async fn get(
+          &self,
+          _target_url: &str,
+          _headers: Option<HashMap<String, String>>,
+        ) -> Result<String> {
+            Ok(String::from(""))
+        }
+
+        async fn post<S>(
+            &self,
+            _target_url: &str,
+            _body: S,
+            _headers: Option<HashMap<String, String>>,
+        ) -> Result<String>
+        where
+            S: Into<Body> + Send {
+                Ok(String::from(""))
+            }
+
+        async fn delete(
+            &self,
+            _target_url: &str,
+            _headers: Option<HashMap<String, String>>,
+        ) -> Result<String> {
+            Ok(String::from(""))
+        }
+    }
+
+    #[test]
+    fn want_to_pass_build() {
+        let _image = Image::new(TestStruct{});
+    }
 
     #[test]
     fn deseriazlie_docker_images_success() {
