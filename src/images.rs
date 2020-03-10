@@ -81,47 +81,55 @@ pub fn deserialize_docker_pull_images(input: &str) -> Result<Vec<DockerImagePull
 }
 
 mod test {
+    #![allow(unused_imports, unused_macros)]
+
     use async_trait::async_trait;
     use hyper::body::Body;
 
     use super::*;
     use crate::request::RequestBuilder;
 
-    pub struct TestStruct {}
+    macro_rules! mock_request {
+        ( $get_res:expr, $post_res:expr, $put_res:expr ) => {
+            pub struct TestStruct {}
 
-    #[async_trait]
-    impl RequestBuilder for TestStruct {
-        async fn get(
-          &self,
-          _target_url: &str,
-          _headers: Option<HashMap<String, String>>,
-        ) -> Result<String> {
-            Ok(String::from(""))
-        }
+            #[async_trait]
+            impl RequestBuilder for TestStruct {
+                async fn get(
+                    self: &Self,
+                    _target_url: &str,
+                    _headers: Option<HashMap<String, String>>,
+                ) -> Result<String> {
+                    Ok($get_res)
+                }
 
-        async fn post<S>(
-            &self,
-            _target_url: &str,
-            _body: S,
-            _headers: Option<HashMap<String, String>>,
-        ) -> Result<String>
-        where
-            S: Into<Body> + Send {
-                Ok(String::from(""))
+                async fn post<S>(
+                    self: &Self,
+                    _target_url: &str,
+                    _body: S,
+                    _headers: Option<HashMap<String, String>>,
+                ) -> Result<String>
+                where
+                    S: Into<Body> + Send,
+                {
+                    Ok($post_res)
+                }
+
+                async fn delete(
+                    self: &Self,
+                    _target_url: &str,
+                    _headers: Option<HashMap<String, String>>,
+                ) -> Result<String> {
+                    Ok($put_res)
+                }
             }
-
-        async fn delete(
-            &self,
-            _target_url: &str,
-            _headers: Option<HashMap<String, String>>,
-        ) -> Result<String> {
-            Ok(String::from(""))
-        }
+        };
     }
 
     #[test]
     fn want_to_pass_build() {
-        let _image = Image::new(TestStruct{});
+        mock_request!(String::from(""), String::from(""), String::from(""));
+        let _image = Image::new(TestStruct {});
     }
 
     #[test]
