@@ -72,6 +72,18 @@ impl<T: RequestBuilder> Container<T> {
             .await
     }
 
+    pub async fn stop_container(&self, id: &str) -> Result<String> {
+        self.builder
+            .post(&format!("/containers/{}/stop", id), vec![], None)
+            .await
+    }
+
+    pub async fn restart_container(&self, id: &str) -> Result<String> {
+        self.builder
+            .post(&format!("/containers/{}/restart", id), vec![], None)
+            .await
+    }
+
     pub async fn remove_container(&self, id: &str) -> Result<String> {
         self.builder
             .delete(&format!("/containers/{}", id), None)
