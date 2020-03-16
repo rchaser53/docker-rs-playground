@@ -78,6 +78,12 @@ impl<T: RequestBuilder> Container<T> {
             .await
     }
 
+    pub async fn start_container(&self, id: &str) -> Result<String> {
+        self.builder
+            .post(&format!("/containers/{}/start", id), vec![], None)
+            .await
+    }
+
     pub async fn restart_container(&self, id: &str) -> Result<String> {
         self.builder
             .post(&format!("/containers/{}/restart", id), vec![], None)
