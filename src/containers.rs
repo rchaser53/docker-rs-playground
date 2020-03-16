@@ -53,7 +53,7 @@ impl<T: RequestBuilder> Container<T> {
 
     pub async fn create_container(
         &self,
-        container_info: CreateContainerBody,
+        container_info: CreateContainerOption,
         query_string: &str,
     ) -> Result<String> {
         let body = Body::from(json!(container_info).to_string());
@@ -105,4 +105,39 @@ pub struct GetContainerOption {
     pub before: Option<String>,
     pub size: Option<bool>,
     pub filters: Option<String>,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+#[serde(rename_all = "PascalCase")]
+pub struct CreateContainerOption {
+    pub hostname: String,
+    pub tty: bool,
+    pub image: String,
+    pub cmd: Vec<String>,
+}
+
+impl Default for CreateContainerOption {
+    fn default() -> Self {
+        CreateContainerOption {
+            hostname: String::from(""),
+            tty: false,
+            image: String::from(""),
+            cmd: vec![],
+        }
+    }
+}
+
+impl CreateContainerOption {
+    pub fn tty(&mut self, tty: bool) -> &mut Self {
+        self.tty = tty;
+        self
+    }
+}
+
+pub fn create_container_option(image: String, cmd: Vec<String>) -> CreateContainerOption {
+    CreateContainerOption {
+        image,
+        cmd,
+        ..Default::default()
+    }
 }
