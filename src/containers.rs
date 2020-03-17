@@ -95,6 +95,12 @@ impl<T: RequestBuilder> Container<T> {
             .delete(&format!("/containers/{}", id), None)
             .await
     }
+
+    pub async fn kill_container(&self, id: &str) -> Result<String> {
+        self.builder
+            .post(&format!("/containers/{}/kill", id), vec![], None)
+            .await
+    }
 }
 
 #[derive(Debug, Default, Serialize)]
