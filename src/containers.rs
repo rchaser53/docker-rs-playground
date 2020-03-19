@@ -101,6 +101,12 @@ impl<T: RequestBuilder> Container<T> {
             .post(&format!("/containers/{}/kill", id), vec![], None)
             .await
     }
+
+    pub async fn top_container(&self, id: &str) -> Result<String> {
+        self.builder
+            .get(&format!("/containers/{}/top", id), None)
+            .await
+    }
 }
 
 #[derive(Debug, Default, Serialize)]
