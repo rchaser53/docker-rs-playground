@@ -39,19 +39,19 @@ impl<T: RequestBuilder> Container<T> {
         Container { builder }
     }
 
-    pub async fn get_containers(&self, query_string: &str) -> Result<String> {
+    pub async fn list(&self, query_string: &str) -> Result<String> {
         self.builder
             .get(&format!("/containers/json?{}", query_string), None)
             .await
     }
 
-    pub async fn get_container(&self, id: &str, query_string: &str) -> Result<String> {
+    pub async fn container(&self, id: &str, query_string: &str) -> Result<String> {
         self.builder
             .get(&format!("/containers/{}/json?{}", id, query_string), None)
             .await
     }
 
-    pub async fn create_container(
+    pub async fn create(
         &self,
         container_info: CreateContainerOption,
         query_string: &str,
@@ -72,37 +72,37 @@ impl<T: RequestBuilder> Container<T> {
             .await
     }
 
-    pub async fn stop_container(&self, id: &str) -> Result<String> {
+    pub async fn stop(&self, id: &str) -> Result<String> {
         self.builder
             .post(&format!("/containers/{}/stop", id), vec![], None)
             .await
     }
 
-    pub async fn start_container(&self, id: &str) -> Result<String> {
+    pub async fn start(&self, id: &str) -> Result<String> {
         self.builder
             .post(&format!("/containers/{}/start", id), vec![], None)
             .await
     }
 
-    pub async fn restart_container(&self, id: &str) -> Result<String> {
+    pub async fn restart(&self, id: &str) -> Result<String> {
         self.builder
             .post(&format!("/containers/{}/restart", id), vec![], None)
             .await
     }
 
-    pub async fn remove_container(&self, id: &str) -> Result<String> {
+    pub async fn remove(&self, id: &str) -> Result<String> {
         self.builder
             .delete(&format!("/containers/{}", id), None)
             .await
     }
 
-    pub async fn kill_container(&self, id: &str) -> Result<String> {
+    pub async fn kill(&self, id: &str) -> Result<String> {
         self.builder
             .post(&format!("/containers/{}/kill", id), vec![], None)
             .await
     }
 
-    pub async fn top_container(&self, id: &str) -> Result<String> {
+    pub async fn top(&self, id: &str) -> Result<String> {
         self.builder
             .get(&format!("/containers/{}/top", id), None)
             .await
