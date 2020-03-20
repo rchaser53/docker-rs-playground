@@ -107,6 +107,30 @@ impl<T: RequestBuilder> Container<T> {
             .get(&format!("/containers/{}/top", id), None)
             .await
     }
+
+    pub async fn logs(&self, id: &str) -> Result<String> {
+        self.builder
+            .get(&format!("/containers/{}/logs", id), None)
+            .await
+    }
+
+    pub async fn changes(&self, id: &str) -> Result<String> {
+        self.builder
+            .get(&format!("/containers/{}/changes", id), None)
+            .await
+    }
+
+    pub async fn export(&self, id: &str) -> Result<String> {
+        self.builder
+            .get(&format!("/containers/{}/export", id), None)
+            .await
+    }
+
+    pub async fn stats(&self, id: &str) -> Result<String> {
+        self.builder
+            .get(&format!("/containers/{}/stats", id), None)
+            .await
+    }
 }
 
 #[derive(Debug, Default, Serialize)]
